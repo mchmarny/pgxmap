@@ -1,5 +1,11 @@
 # pgxmap
 
+[![test](https://github.com/mchmarny/pgxmap/actions/workflows/test-on-push.yaml/badge.svg?branch=main)](https://github.com/mchmarny/pgxmap/actions/workflows/test-on-push.yaml) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mchmarny/pgxmap)](https://goreportcard.com/report/github.com/mchmarny/pgxmap) 
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mchmarny/pgxmap) 
+[![codecov](https://codecov.io/gh/mchmarny/pgxmap/branch/main/graph/badge.svg?token=00H8S7GMPP)](https://codecov.io/gh/mchmarny/pgxmap) 
+[![GoDoc](https://godoc.org/github.com/mchmarny/pgxmap?status.svg)](https://godoc.org/github.com/mchmarny/pgxmap)
+
 Custom map to use with [pgx](https://github.com/jackc/pgx) help with `map[string]interface{}` decoding and encoding correctly map items types (e.g. `int64`) when saved and retrieved from Postgres DB. 
 
 ## Why 

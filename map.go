@@ -104,8 +104,6 @@ func (m *ConfigMap) Scan(value interface{}) error {
 				(*m)[item.Key] = int8(i)
 			case reflect.Int.String():
 				(*m)[item.Key] = int(i)
-			case reflect.Uint.String():
-				(*m)[item.Key] = uint(i)
 			case reflect.Uint64.String():
 				(*m)[item.Key] = uint64(i)
 			case reflect.Uint32.String():
@@ -117,10 +115,10 @@ func (m *ConfigMap) Scan(value interface{}) error {
 			case reflect.Uint.String():
 				(*m)[item.Key] = uint(i)
 			default:
-				(*m)[item.Key] = item.Value
+				return errors.Errorf("unsupported number type: %s", item.Type)
 			}
 		default:
-			(*m)[item.Key] = item.Value
+			return errors.Errorf("unsupported type: %s", item.Type)
 		}
 	}
 

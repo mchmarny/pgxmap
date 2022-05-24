@@ -8,8 +8,8 @@ import (
 )
 
 func TestMap(t *testing.T) {
-	bigInt := time.Now().UnixNano()
 	utc := time.Now().UTC()
+	bigInt := utc.UnixNano()
 
 	m := ConfigMap{
 		"int64":   bigInt,
@@ -25,7 +25,15 @@ func TestMap(t *testing.T) {
 		"float32": float32(12345.6789),
 		"float64": float64(bigInt) / float64(3),
 		"utc":     utc,
+		"string":  "hello",
 	}
+
+	err := m.Scan(nil)
+	assert.Error(t, err)
+
+	badJSON := []byte(`{"int64": "bad"}`)
+	err = m.Scan(badJSON)
+	assert.Error(t, err)
 
 	d, err := m.Value()
 	if err != nil {

@@ -11,3 +11,4 @@ ignore:
   - "**/*.pb.go" 
   - "examples"
   - "vendor"
+  

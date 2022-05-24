@@ -68,6 +68,12 @@ jobs:
       run: |
         make test
 
+    - name: Test Coverage
+      uses: codecov/codecov-action@v2
+      with:
+        files: ./cover.out
+        fail_ci_if_error: true
+
     - name: Run Example
       run: |
         make example

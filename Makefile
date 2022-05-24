@@ -14,7 +14,7 @@ upgrade: ## Upgrades all dependancies
 .PHONY: upgrade
 
 test: tidy ## Runs unit tests
-	go test -count=1 -race -covermode=atomic -coverprofile=cover.out .
+	go test -count=1 -race -covermode=atomic -coverprofile=cover.out ./...
 .PHONY: test
 
 cover: test ## Runs unit tests and putputs coverage

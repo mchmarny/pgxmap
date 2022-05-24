@@ -50,7 +50,7 @@ jobs:
     - name: Setup DB
       run: psql -h localhost -d demo -U demo < examples/db/schema.sql
       env:
-        PGPASSWORD: dev
+        PGPASSWORD: demo
 
     - name: Config Lint
       id: golangci_config

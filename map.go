@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -18,23 +19,26 @@ type ConfigMap map[string]interface{}
 
 // Value implements the driver.Valuer interface.
 func (m ConfigMap) Value() (driver.Value, error) {
-	items := make([]Item, 0, len(m))
+	items := make([]mapItem, 0, len(m))
 	for k, v := range m {
 		var val interface{}
 		transformed := false
 
-		switch v.(type) {
+		switch v := v.(type) {
 		case int64, int32, int16, int8, int, uint64, uint32, uint16, uint8, uint:
 			val = fmt.Sprintf("%d", v)
 			transformed = true
 		case float64, float32:
 			val = fmt.Sprintf("%f", v)
 			transformed = true
+		case time.Time:
+			val = v.Format(time.RFC3339Nano)
+			transformed = true
 		default:
 			val = v
 		}
 
-		items = append(items, Item{
+		items = append(items, mapItem{
 			Key:         k,
 			Value:       val,
 			Type:        reflect.TypeOf(v).Name(),
@@ -52,20 +56,26 @@ func (m *ConfigMap) Scan(value interface{}) error {
 		return errors.New("invalid type assertion: .([]byte)")
 	}
 
-	var list []Item
-	err := json.Unmarshal(source, &list)
+	var items []mapItem
+	err := json.Unmarshal(source, &items)
 	if err != nil {
 		return errors.Wrap(err, "error unmarshalling json")
 	}
 
-	*m = make(map[string]interface{}, len(list))
-	for _, item := range list {
+	*m = make(map[string]interface{}, len(items))
+	for _, item := range items {
 		if !item.Transformed {
 			(*m)[item.Key] = item.Value
 			continue
 		}
 
 		switch item.Type {
+		case "Time":
+			t, err := time.Parse(time.RFC3339Nano, item.Value.(string))
+			if err != nil {
+				return errors.Wrap(err, "error parsing time")
+			}
+			(*m)[item.Key] = t
 		case "float64", "float32":
 			val, err := strconv.ParseFloat(item.Value.(string), 64)
 			if err != nil {
@@ -115,4 +125,12 @@ func (m *ConfigMap) Scan(value interface{}) error {
 	}
 
 	return nil
+}
+
+// mapItem represents a single item in a ConfigMap that's persisted into DB.
+type mapItem struct {
+	Key         string      `json:"k"`
+	Value       interface{} `json:"v"`
+	Type        string      `json:"t"`
+	Transformed bool        `json:"b"`
 }

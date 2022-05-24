@@ -9,6 +9,7 @@ import (
 
 func TestMap(t *testing.T) {
 	bigInt := time.Now().UnixNano()
+	utc := time.Now().UTC()
 
 	m := ConfigMap{
 		"int64":   bigInt,
@@ -23,6 +24,7 @@ func TestMap(t *testing.T) {
 		"uint":    uint(bigInt),
 		"float32": float32(12345.6789),
 		"float64": float64(bigInt) / float64(3),
+		"utc":     utc,
 	}
 
 	d, err := m.Value()
@@ -56,4 +58,5 @@ func TestMap(t *testing.T) {
 	assert.Equal(t, m["uint"].(uint), m2["uint"].(uint))
 	assert.Equal(t, m["float32"].(float32), m2["float32"].(float32))
 	assert.Equal(t, m["float64"].(float64), m2["float64"].(float64))
+	assert.Equal(t, m["utc"].(time.Time), m2["utc"].(time.Time))
 }

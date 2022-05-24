@@ -4,19 +4,17 @@ Custom map to use with [pgx](https://github.com/jackc/pgx) help with `map[string
 
 ## Why 
 
-`pgx` stores JSON-marshalled objects in DB as JSONB. For Go `structs` the `pgx` driver encods Go types to JSON and back automatically. However, when using interface (e.g. `map[string]interface{}`) and the original being for example `int64`, `pgx` has to guess when scanning DB selection results. 
-
-There isn't much `pgx` can actually do here as this is due to JavaScript not being able to distinguish between integers and floats (see [this](https://tools.ietf.org/html/rfc7159#section-6) for details). 
+`pgx` stores JSON-marshalled objects in DB as JSONB type. For Go `structs` with priory know types, `pgx` driver encodes Go types to JSON and back automatically. However, when unmarshalling into a Go interface (e.g. `map[string]interface{}`) Go decoding has to do some guessing to map certain types when scanning DB selection results (e.g. `int64` vs `float64`). There isn't really much `pgx` can actually do here since JavaScript itself does not distinguish between integers and floats (see [this](https://tools.ietf.org/html/rfc7159#section-6) for details). There are similar issues with time precision as well.
 
 > The full demo of the error resulting from an idiomatic implementation is available [here](examples/idiom/main.go).
 
 There are 3 diff ways you can deal with this issue:
 
 1. Avoid using map with interface value altogether
-2. Use default/predictable types (e.g. convert values to strings and parse on return) 
-3. Use the `driver.Valuer` interface to intercept values to do your own encoding and decoding (e.g. `pgxmap`)
+2. Use map with all values as strings and parse on return
+3. Use the `driver.Valuer` interface to do your own encoding and decoding
 
-The `pgxmap` uses the 3rd approach and ensures that the `int` or `float` derivative types (`int64`, `int32`, `uint16`, `float64` etc.) in your map are automatically saved and retrieved correctly while still providing that basic Go map-like functionality. 
+The `pgxmap` uses the 3rd approach and ensures that the `int`, `float` derivative types (`int64`, `int32`, `uint16`, `float64` etc.) and `time` in your map are automatically correctly encoded and decoded to ensure exact same type/precision while still providing that basic Go map-like functionality. 
 
 ## Usage 
 

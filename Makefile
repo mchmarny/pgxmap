@@ -25,6 +25,10 @@ lint: ## Lints the entire project
 	golangci-lint -c .golangci.yaml run
 .PHONY: lint
 
+example: ## Runs the example
+	go run examples/pgxmap/main.go
+.PHONY: example
+
 tag: ## Creates release tag 
 	git tag $(RELEASE_VERSION)
 	git push origin $(RELEASE_VERSION)

@@ -1,0 +1,73 @@
+name: test
+
+on:
+  workflow_call:
+    
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: cm
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    
+    - name: Setup Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.18
+
+    - name: Cache Go Modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: Setup DB
+      run: psql -h localhost -d news -U dev < examples/db/schema.sql
+      env:
+        PGPASSWORD: dev
+
+    - name: Config Lint
+      id: golangci_config
+      uses: andstor/file-existence-action@v1
+      with:
+        files: .golangci.yaml
+
+    - name: Lint Code
+      if: steps.golangci_config.outputs.files_exists == 'true'
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+
+    - name: Unit Test
+      run: |
+        make test
+
+    - name: Run Example
+      run: |
+        make example

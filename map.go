@@ -11,6 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	timeTypeName = "Time"
+)
+
 // validates driver.Valuer interface implementation.
 var _ driver.Valuer = ConfigMap{}
 
@@ -59,7 +63,7 @@ func (m *ConfigMap) Scan(value interface{}) error {
 	var items []mapItem
 	err := json.Unmarshal(source, &items)
 	if err != nil {
-		return errors.Wrap(err, "error unmarshalling json")
+		return errors.Wrapf(err, "error unmarshalling json into []mapItem from %s", source)
 	}
 
 	*m = make(map[string]interface{}, len(items))
@@ -70,27 +74,30 @@ func (m *ConfigMap) Scan(value interface{}) error {
 		}
 
 		switch item.Type {
-		case "Time":
-			t, err := time.Parse(time.RFC3339Nano, item.Value.(string))
-			if err != nil {
-				return errors.Wrap(err, "error parsing time")
-			}
-			(*m)[item.Key] = t
-		case "float64", "float32":
+		case reflect.Float64.String(), reflect.Float32.String():
 			val, err := strconv.ParseFloat(item.Value.(string), 64)
 			if err != nil {
-				return errors.Wrap(err, "error parsing float64")
+				return errors.Wrapf(err, "error parsing float64 from %s", item.Value)
 			}
-			if item.Type == "float32" {
+			if item.Type == reflect.Float32.String() {
 				(*m)[item.Key] = float32(val)
 				break
 			}
 			(*m)[item.Key] = val
 
-		case "int64", "int32", "int16", "int8", "int", "uint64", "uint32", "uint16", "uint8", "uint":
+		case reflect.Int64.String(),
+			reflect.Int32.String(),
+			reflect.Int16.String(),
+			reflect.Int8.String(),
+			reflect.Int.String(),
+			reflect.Uint64.String(),
+			reflect.Uint32.String(),
+			reflect.Uint16.String(),
+			reflect.Uint8.String(),
+			reflect.Uint.String():
 			i, err := strconv.ParseInt(item.Value.(string), 10, 64)
 			if err != nil {
-				return errors.Wrap(err, "error parsing int64")
+				return errors.Wrapf(err, "error parsing int64 from %s", item.Value)
 			}
 
 			switch item.Type {
@@ -115,8 +122,14 @@ func (m *ConfigMap) Scan(value interface{}) error {
 			case reflect.Uint.String():
 				(*m)[item.Key] = uint(i)
 			default:
-				return errors.Errorf("unsupported number type: %s", item.Type)
+				return errors.Errorf("unsupported number type %s for %v", item.Type, item.Value)
 			}
+		case timeTypeName:
+			t, err := time.Parse(time.RFC3339Nano, item.Value.(string))
+			if err != nil {
+				return errors.Wrapf(err, "error parsing time from %v", item.Value)
+			}
+			(*m)[item.Key] = t
 		default:
 			return errors.Errorf("unsupported type: %s", item.Type)
 		}

@@ -14,11 +14,12 @@ Custom map to use with [pgx](https://github.com/jackc/pgx) help with `map[string
 
 > The full demo of the error resulting from an idiomatic implementation is available [here](examples/idiom/main.go).
 
-There are 3 diff ways you can deal with this issue:
+There are 4 diff ways you can deal with this issue:
 
 1. Avoid using map with interface value altogether
 2. Use map with all values as strings and parse on return
 3. Use the `driver.Valuer` interface to do your own encoding and decoding
+4. Use the "wrapper struct" (assuming you have the luxury of using generics)
 
 The `pgxmap` uses the 3rd approach and ensures that the `int`, `float` derivative types (`int64`, `int32`, `uint16`, `float64` etc.) and `time` in your map are automatically correctly encoded and decoded to ensure exact same type/precision while still providing that basic Go map-like functionality. 
 
@@ -26,11 +27,13 @@ The `pgxmap` uses the 3rd approach and ensures that the `int`, `float` derivativ
 
 The basic usage of the `pgxmap` library falls into 3 patterns: 
 
-* Config map creation 
+* Creation of data (config map or state struct)
 * Saving it to DB
 * Retrieving it from DB
 
 ### Creation 
+
+#### Config Map
 
 > For illustration purposes, this example creates a config map with only 3 items with the different types. See [map_test.go](./map_test.go) for broader example.
 
@@ -44,6 +47,34 @@ The basic usage of the `pgxmap` library falls into 3 patterns:
 	}
 ```
 
+#### State Struct
+
+Assuming the data you want to persist into DB looks something like this:
+
+```go
+type MyThing struct {
+	String string    `json:"s"`
+	Number int64     `json:"n"`
+	Float  float64   `json:"f"`
+	Time   time.Time `json:"t"`
+	Bool   bool      `json:"b"`
+}
+```
+
+You wrap it into the `State` struct like this:
+
+```go 
+s := pgxmap.State[MyThing]{
+	Data: MyThing{
+		String: "hello",
+		Number: 1653398649063529000,
+		Float:  1653398731.740085,
+		Time:   time.Now(),
+		Bool:   true,
+	},
+}
+```
+
 ### Saving 
 
 Assuming the DB table schema looks something like this (key is the `JSONB` column type): 
@@ -55,7 +86,7 @@ CREATE TABLE IF NOT EXISTS demo (
 );
 ```
 
-Saving the map then is as simple as using it as yet another parameter in your `Exec` method:
+Saving the map or state object into DB then is as simple as using it as yet another parameter in your `Exec` method:
 
 > Assuming the `sql` variable holding your `SELECT` statement is already defined.
 
@@ -71,20 +102,20 @@ func save(ctx context.Context, p *pgxpool.Pool, id string, m pgxmap.ConfigMap) e
 
 ### Retrieval 
 
-Similarly, during retrieval you simply provide a pointer to the `ConfigMap` and use the `row.Scan` method:
+Similarly, during retrieval you simply provide a pointer to the `ConfigMap` or `State` and use the `row.Scan` method:
 
 > Assuming the `sql` variable holding your `INSERT` statement is already defined.
 
 ```go
-func get(ctx context.Context, p *pgxpool.Pool, id string) (pgxmap.ConfigMap, error) {
+func get(ctx context.Context, p *pgxpool.Pool, id string) (pgxmap.State, error) {
     // input validation skipped for brevity 
-	var m pgxmap.ConfigMap
+	var s pgxmap.State
 	row := pool.QueryRow(ctx, sql, id)
-	if err := row.Scan(&cm); err != nil && err != pgx.ErrNoRows {
+	if err := row.Scan(&s); err != nil && err != pgx.ErrNoRows {
 		return nil, errors.Wrap(err, "error scanning row")
 	}
 
-	return cm, nil
+	return s, nil
 }
 ```
 

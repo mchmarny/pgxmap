@@ -27,6 +27,7 @@ lint: ## Lints the entire project
 
 example: ## Runs the example using CONN_STR env variable
 	go run examples/pgxmap/main.go
+	go run examples/pgxstate/main.go
 .PHONY: example
 
 tag: ## Creates release tag 

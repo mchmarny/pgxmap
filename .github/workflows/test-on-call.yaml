@@ -48,7 +48,7 @@ jobs:
         fetch-depth: 2
 
     - name: Setup DB
-      run: psql -h localhost -d demo -U dev < examples/db/schema.sql
+      run: psql -h localhost -d demo -U demo < examples/db/schema.sql
       env:
         PGPASSWORD: dev
 

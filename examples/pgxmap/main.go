@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -13,9 +14,13 @@ import (
 )
 
 const (
-	connStr   = "postgresql://dev:dev@localhost:5432/cm"
-	selectSQL = `SELECT cf FROM demo WHERE id = $1`
-	insertSQL = `INSERT INTO demo (id, cf) VALUES ($1, $2)`
+	selectSQL = `SELECT cm FROM example WHERE id = $1`
+	insertSQL = `INSERT INTO example (id, cm) VALUES ($1, $2)`
+)
+
+var (
+	// example: "postgresql://demo:demo@localhost:5432/demo"
+	connStr = os.Getenv("CONN_STR")
 )
 
 func main() {

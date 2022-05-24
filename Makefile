@@ -25,7 +25,7 @@ lint: ## Lints the entire project
 	golangci-lint -c .golangci.yaml run
 .PHONY: lint
 
-example: ## Runs the example
+example: ## Runs the example using CONN_STR env variable
 	go run examples/pgxmap/main.go
 .PHONY: example
 

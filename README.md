@@ -38,13 +38,13 @@ The basic usage of the `pgxmap` library falls into 3 patterns:
 > For illustration purposes, this example creates a config map with only 3 items with the different types. See [map_test.go](./map_test.go) for broader example.
 
 ```go
-	bigInt := time.Now().UnixNano()
+bigInt := time.Now().UnixNano()
 
-	m := pgxmap.ConfigMap{
-		"int64":   bigInt,
-		"uint32":  uint32(bigInt),
-		"float64": float64(bigInt) / float64(3),
-	}
+m := pgxmap.ConfigMap{
+	"int64":   bigInt,
+	"uint32":  uint32(bigInt),
+	"float64": float64(bigInt) / float64(3),
+}
 ```
 
 #### State Struct
@@ -107,15 +107,12 @@ Similarly, during retrieval you simply provide a pointer to the `ConfigMap` or `
 > Assuming the `sql` variable holding your `INSERT` statement is already defined.
 
 ```go
-func get(ctx context.Context, p *pgxpool.Pool, id string) (pgxmap.State, error) {
-    // input validation skipped for brevity 
-	var s pgxmap.State
-	row := pool.QueryRow(ctx, sql, id)
-	if err := row.Scan(&s); err != nil && err != pgx.ErrNoRows {
-		return nil, errors.Wrap(err, "error scanning row")
+func save[T any](ctx context.Context, p *pgxpool.Pool, id string, s *pgxmap.State[T]) error {
+	// input validation skipped for brevity 
+	if _, err := p.Exec(ctx, insertSQL, id, s); err != nil {
+		return errors.Wrap(err, "error inserting row")
 	}
-
-	return s, nil
+	return nil
 }
 ```
 
